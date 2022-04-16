@@ -7,18 +7,23 @@ Servo sYellow; // shank  angle: eta
 
 #define sPinB 9 
 #define sPinY 10
+#define Xpin A0
+#define Ypin A1
+
 
 // setting servos init: this is when P(x,y) = P(0,0)
-float sB_init = 1031; // KEY: set zero to 0, servo moves CCW 
-float sY_init = 1031; // KEY: if we go with eta then 90 deg becomes the new 0 deg for Yellow, i.e. sY_angle = 90 - eta
+float sB_init = 1450; // KEY: set zero to 0, servo moves CCW 
+float sY_init = 1575; // KEY: if we go with eta then 90 deg becomes the new 0 deg for Yellow, i.e. sY_angle = 90 - eta
 
 //pulse width microseconds to set the range the servos from 0 to 180
-int min_pw = 550; //default is 544
-int max_pw = 2475; // default is 2400
+int min_pwB = 950; 
+int max_pwB = 1950; 
+int min_pwY = 1075; 
+int max_pwY = 2075; 
 
 //servo offsets in degree
-float sB_offset = -3.0;
-float sY_offset = 5.0;
+//float sB_offset = -3.0;
+//float sY_offset = 5.0;
 
 // switch:
 int sw = 0;
@@ -29,24 +34,32 @@ float yn; // value to move in the y direction
 float psi_deg;
 float eta_deg;
 
-int endp = 100; // end point
+int endp = 25; // end point
 
 // output to servos
-float shankMs;
-float thighMs;
+//float shankMs;
+//float thighMs;
+
+// joystick vars
+float Xval;
+float Yval;
 
 // inverse kinematics
 void foxyIK(float Px, float Py);
 
 void setup() {
   Serial.begin(9600);
+
+  //init joystick
+  pinMode(Xpin,INPUT);
+  pinMode(Ypin,INPUT);
   
     // intializing servos 
-  sBlue.writeMicroseconds(sB_init - 32.083); // 
-  sYellow.writeMicroseconds(sY_init + 53.472); 
+  sBlue.writeMicroseconds(sB_init); // - 32.083
+  sYellow.writeMicroseconds(sY_init); // + 53.472
    
-  sBlue.attach(sPinB,min_pw,max_pw); // "thigh"
-  sYellow.attach(sPinY,min_pw,max_pw); // "shank"
+  sBlue.attach(sPinB,min_pwB,max_pwB); // "thigh"
+  sYellow.attach(sPinY,min_pwY,max_pwY); // "shank"
   delay(2000);
    
   
@@ -56,11 +69,28 @@ void loop() {
 
   //delay(2000);
 
-  if (sw <= 10) {
+  if (sw < 3) {
+    
       Swing();
+      Down();
       //delay(1000);
       Stance();
+      Up();
       sw = sw + 1;
+    }
+  else {
+    sBlue.detach(); // "thigh"
+    sYellow.detach(); // "shank"
+    /*
+      Xval = analogRead(Xpin);
+      Yval = analogRead(Ypin);
+      xn = Xval * (60.0/1023.0) - 30.0;
+      yn = Yval * (60.0/1023.0) - 30.0;
+      foxyIK(xn,yn);
+      sBlue.writeMicroseconds(degtoMicroS(psi_deg+sB_offset));
+      sYellow.writeMicroseconds(degtoMicroS(90-eta_deg+sY_offset));
+      //delay(2)
+      */  
     }
   }
 
@@ -106,9 +136,14 @@ void foxyIK(float Px, float Py) {
   //return psi_deg, eta_deg;
 }
 
-float degtoMicroS(float degree) {
-  float MicroS = 550.0 + degree*(1925.0/180.0);
-  return MicroS;
+float degtoMicroS_B(float degree) {
+    float MicroSB = min_pwB + degree*(1000.0/90.0);
+    return MicroSB;
+}
+
+float degtoMicroS_Y(float degree) {
+    float MicroSY = min_pwY + degree*(1000.0/90.0);
+    return MicroSY;
 }
 
 void Dir(int dir) {
@@ -126,54 +161,88 @@ void Dir(int dir) {
       xn = i * xstep; 
       yn = i * ystep;
       foxyIK(xn,yn);
-      sBlue.writeMicroseconds(degtoMicroS(psi_deg+sB_offset));
-      sYellow.writeMicroseconds(degtoMicroS(90-eta_deg+sY_offset));
+      sBlue.writeMicroseconds(degtoMicroS_B(psi_deg));
+      sYellow.writeMicroseconds(degtoMicroS_Y(90-eta_deg));
       delay(15);
       }
       for (int i = endp-1; i >= 0; i--) {  // for loop is equiv to linspace
       xn = i * xstep; 
       yn = i * ystep;
       foxyIK(xn,yn);
-      sBlue.writeMicroseconds(degtoMicroS(psi_deg+sB_offset));
-      sYellow.writeMicroseconds(degtoMicroS(90-eta_deg+sY_offset));
+      sBlue.writeMicroseconds(degtoMicroS_B(psi_deg));
+      sYellow.writeMicroseconds(degtoMicroS_Y(90-eta_deg));
       delay(15);
       }
       for (int i = 0; i >= -endp; i--) {  // for loop is equiv to linspace
       xn = i * xstep; 
       yn = i * ystep;
       foxyIK(xn,yn);
-      sBlue.writeMicroseconds(degtoMicroS(psi_deg+sB_offset));
-      sYellow.writeMicroseconds(degtoMicroS(90-eta_deg+sY_offset));
+      sBlue.writeMicroseconds(degtoMicroS_B(psi_deg));
+      sYellow.writeMicroseconds(degtoMicroS_Y(90-eta_deg));
       delay(15);
       }
       for (int i = -endp; i <= 0; i++) {  // for loop is equiv to linspace
       xn = i * xstep; 
       yn = i * ystep;
       foxyIK(xn,yn);
-      sBlue.writeMicroseconds(degtoMicroS(psi_deg+sB_offset));
-      sYellow.writeMicroseconds(degtoMicroS(90-eta_deg+sY_offset));
+      sBlue.writeMicroseconds(degtoMicroS_B(psi_deg));
+      sYellow.writeMicroseconds(degtoMicroS_Y(90-eta_deg));
       delay(15);
       }
 }
 
 void Swing() {
   for (int i = 0; i <= endp; i++) {  // for loop is equiv to linspace
-      xn = i * 0.25; 
+      xn = i * 1; 
       yn = sqrt(156.25 - pow((xn - 12.5),2));
       foxyIK(xn,yn);
-      sBlue.writeMicroseconds(degtoMicroS(psi_deg+sB_offset));
-      sYellow.writeMicroseconds(degtoMicroS(90-eta_deg+sY_offset));
-      delay(2);
+      //Serial.print(degtoMicroS_B(psi_deg));
+      //Serial.print(',');
+      //Serial.println(degtoMicroS_Y(90-eta_deg));
+      sBlue.writeMicroseconds(round(degtoMicroS_B(psi_deg)));
+      sYellow.writeMicroseconds(round(degtoMicroS_Y(90-eta_deg)));
+      delay(10);
       }
 }
 
+void Down() {
+  for (int i = 0; i < 15; i++) {
+    xn = xn;
+    yn = yn - 1;
+    foxyIK(xn,yn);
+    //Serial.print(xn);
+    //Serial.print(',');
+    //Serial.println(yn);
+    sBlue.writeMicroseconds(round(degtoMicroS_B(psi_deg)));
+    sYellow.writeMicroseconds(round(degtoMicroS_Y(90-eta_deg)));
+    delay(10);
+  }
+}
+
 void Stance() {
-  for (int i = endp; i >= 0; i--) {
-    xn = xn - 0.25;
+  for (int i = endp; i > 0; i--) {
+    xn = xn - 1;
     yn = yn;
     foxyIK(xn,yn);
-    sBlue.writeMicroseconds(degtoMicroS(psi_deg+sB_offset));
-    sYellow.writeMicroseconds(degtoMicroS(90-eta_deg+sY_offset));
-    delay(2);
+    //Serial.print(round(degtoMicroS_B(psi_deg)));
+    //Serial.print(',');
+    //Serial.println(round(degtoMicroS_Y(90-eta_deg)));
+    sBlue.writeMicroseconds(round(degtoMicroS_B(psi_deg)));
+    sYellow.writeMicroseconds(round(degtoMicroS_Y(90-eta_deg)));
+    delay(10);
+  }
+}
+
+void Up() {
+  for (int i = 0; i < 15; i++) {
+    xn = xn;
+    yn = yn + 1;
+    foxyIK(xn,yn);
+    //Serial.print(xn);
+    //Serial.print(',');
+    //Serial.println(yn);
+    sBlue.writeMicroseconds(round(degtoMicroS_B(psi_deg)));
+    sYellow.writeMicroseconds(round(degtoMicroS_Y(90-eta_deg)));
+    delay(10);
   }
 }
