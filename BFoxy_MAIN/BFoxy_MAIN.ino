@@ -27,6 +27,8 @@ int max_pwY = 2075;
 
 // switch:
 int sw = 0;
+//delay
+int d = 15;
 
 // leg vars:
 float xn; // value to move in the x direction
@@ -69,13 +71,13 @@ void loop() {
 
   //delay(2000);
 
-  if (sw < 3) {
+  if (sw < 1) {
     
       Swing();
       Down();
-      //delay(1000);
       Stance();
       Up();
+      Right();
       sw = sw + 1;
     }
   else {
@@ -196,12 +198,12 @@ void Swing() {
       xn = i * 1; 
       yn = sqrt(156.25 - pow((xn - 12.5),2));
       foxyIK(xn,yn);
-      //Serial.print(degtoMicroS_B(psi_deg));
-      //Serial.print(',');
-      //Serial.println(degtoMicroS_Y(90-eta_deg));
+      Serial.print(xn);
+      Serial.print(',');
+      Serial.println(yn);
       sBlue.writeMicroseconds(round(degtoMicroS_B(psi_deg)));
       sYellow.writeMicroseconds(round(degtoMicroS_Y(90-eta_deg)));
-      delay(10);
+      delay(d);
       }
 }
 
@@ -210,26 +212,26 @@ void Down() {
     xn = xn;
     yn = yn - 1;
     foxyIK(xn,yn);
-    //Serial.print(xn);
-    //Serial.print(',');
-    //Serial.println(yn);
+    Serial.print(xn);
+    Serial.print(',');
+    Serial.println(yn);
     sBlue.writeMicroseconds(round(degtoMicroS_B(psi_deg)));
     sYellow.writeMicroseconds(round(degtoMicroS_Y(90-eta_deg)));
-    delay(10);
+    delay(d);
   }
 }
 
 void Stance() {
-  for (int i = endp; i > 0; i--) {
+  for (int i = endp + 15; i > 0; i--) {
     xn = xn - 1;
     yn = yn;
     foxyIK(xn,yn);
-    //Serial.print(round(degtoMicroS_B(psi_deg)));
-    //Serial.print(',');
-    //Serial.println(round(degtoMicroS_Y(90-eta_deg)));
+    Serial.print(xn);
+    Serial.print(',');
+    Serial.println(yn);
     sBlue.writeMicroseconds(round(degtoMicroS_B(psi_deg)));
     sYellow.writeMicroseconds(round(degtoMicroS_Y(90-eta_deg)));
-    delay(10);
+    delay(d);
   }
 }
 
@@ -238,11 +240,25 @@ void Up() {
     xn = xn;
     yn = yn + 1;
     foxyIK(xn,yn);
-    //Serial.print(xn);
-    //Serial.print(',');
-    //Serial.println(yn);
+    Serial.print(xn);
+    Serial.print(',');
+    Serial.println(yn);
     sBlue.writeMicroseconds(round(degtoMicroS_B(psi_deg)));
     sYellow.writeMicroseconds(round(degtoMicroS_Y(90-eta_deg)));
-    delay(10);
+    delay(d);
+  }
+}
+
+void Right() {
+  for (int i = 0; i < 15; i++) {
+    xn = xn + 1;
+    yn = yn;
+    foxyIK(xn,yn);
+    Serial.print(xn);
+    Serial.print(',');
+    Serial.println(yn);
+    sBlue.writeMicroseconds(round(degtoMicroS_B(psi_deg)));
+    sYellow.writeMicroseconds(round(degtoMicroS_Y(90-eta_deg)));
+    delay(d);
   }
 }
