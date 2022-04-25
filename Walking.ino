@@ -1,4 +1,4 @@
-//Samid Ceballos (4/21/22)
+//Samid Ceballos (4/24/22)
 // code to start 4 leg walking hopefully
 
 // LIBRARIES  
@@ -8,21 +8,21 @@
 // CONSTANTS  
 
 //servo stuff
-#define num 6 // number of servos
-const int SrvPin[num] = {3,5,6,9,10,11};  //servo pins
-const int minPW[num] =  {900,910,1025,935,0,0}; // servo's respective min pulse width
-const int maxPW[num] = {1900,1910,2025,1935,0,0}; // servo's max pulse width
-const int SrvInit[num] = {1400,1410,1525,1435,0,0}; // servo's 45 degree position to start 
+#define num 8 // number of servos
+const int SrvPin[num] = {3,5,6,7,9,10,11,12};  //servo pins
+const float minPW[num] =  {900.0,910.0,1025.0,935.0,0.0,0.0}; // servo's respective min pulse width
+const float maxPW[num] = {1900.0,1910.0,2025.0,1935.0,0,0.0}; // servo's max pulse width
+const float SrvInit[num] = {1400.0,1410.0,1525.0,1435.0,0.0,0.0}; // servo's 45 degree position to start 
 
 // gait stuff
 const int endp = 50; // number of points of the gait cycle
 const int period = 12500; // in us, time each servowrite is commanded, "speed" of the gait
-const int gait_cycles = 1;
+const int gait_cycles = 0;
 
 // GLOBAL VARIABLES
 unsigned long current; // us current time
 unsigned long previous; // us previous time
-unsigned long  i = 0; // used as a increment for the gait 
+unsigned long  i = 0; // used as a increment for the gait (might make h, and i local vars and store them in a function)
 unsigned long h = 0; // used as a increment for the gait 
 float t; // time in loop (seconds)
 
@@ -88,7 +88,8 @@ void loop() {
       // Get servo angles from end effector position (IK)
       foxyIK(xn,yn);
       // Write to servo 
-
+      Srv[0].writeMicroseconds(degtoMicros(psi_deg,0));
+      Srv[1].writeMicroseconds(degtoMicros(90-eta_deg,1));
 
       //
 
@@ -119,35 +120,59 @@ void loop() {
 
 }
 
-void setPwmFrequency(int pin, int divisor) {
-  byte mode;
-  if(pin == 5 || pin == 6 || pin == 9 || pin == 10) {
-    switch(divisor) {
-      case 1: mode = 0x01; break;
-      case 8: mode = 0x02; break;
-      case 64: mode = 0x03; break;
-      case 256: mode = 0x04; break;
-      case 1024: mode = 0x05; break;
-      default: return;
-    }
-    if(pin == 5 || pin == 6) {
-      TCCR0B = TCCR0B & 0b11111000 | mode;
-    } else {
-      TCCR1B = TCCR1B & 0b11111000 | mode;
-    }
-  } else if(pin == 3 || pin == 11) {
-    switch(divisor) {
-      case 1: mode = 0x01; break;
-      case 8: mode = 0x02; break;
-      case 32: mode = 0x03; break;
-      case 64: mode = 0x04; break;
-      case 128: mode = 0x05; break;
-      case 256: mode = 0x06; break;
-      case 1024: mode = 0x7; break;
-      default: return;
-    }
-    TCCR2B = TCCR2B & 0b11111000 | mode;
+void foxyIK(float Px, float Py) {
+  float S;
+  float alpha;
+  float b;
+  float psi;
+  float phi;
+  float eta;
+  //  foxy leg kinematics /
+  //  constant values of leg links length. Links are: c1, c2, a1, a2  /
+  //  [mm] this is the link connected to servo 1 and c2 /
+  //  connected to c1 and a2 /
+  //  parallelogram, a1 connected to servo 2 and a2 /
+  //  link that touches the ground //
+  //  solve for b : the resultant vector from the origin to the end effector //
+  b = sqrt((91.92 - Py) * (91.92 - Py) + Px * Px);
+  //  get the 2 angles that need to be sent to the servos (phi and psi) //
+  S = acos((91.92 - Py) / b);
+  // angle between b and the vertical d "y component of b" //
+  if (Px < 0.0) {
+    S = -S;
+    //  if e is negative make the angle S negative //
   }
+  alpha = acos(((b * b + 1024.0) - 1024.0) / (2.0 * b * 65));
+  //  angle from right horizontal to b //
+  psi = (PI - alpha) - ((PI/2.0) - S);
+  phi = ((PI - 2.0 * alpha) - psi);
+  eta = (PI/2.0) - phi;
+  //  180 deg minus the two angles //
+  //  isoceles triangle: so beta the angle from a2 and a1 is easy to get from
+   // alpha //
+  // angle between left horizontal to c1 //
+  //  convert (phi and psi into degrees) //
+  psi_deg = (180.0/PI) * psi;
+  eta_deg = (180.0/PI) * eta;
+  //return psi_deg, eta_deg;
+}
+
+
+float degtoMicros(float degree, int srv_num) {
+ // float micro = minPW[srv_num] + degree*(1000.0/90.0);
+ // return micro;
+ float micro = minPW[srv_num];
+ switch(srv_num) {
+  case 0: micro += degree*((maxPW[srv_num] - minPW[srv_num])/90.0)
+  case 1:
+  case 2:
+  case 3:
+  case 4:
+  case 5:
+  case 6:
+  case 7:
+ }
+ return micro;
 }
 
 

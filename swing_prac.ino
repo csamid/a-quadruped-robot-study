@@ -1,4 +1,4 @@
-// Samid Ceballos (4/16/22) 
+// Samid Ceballos (4/24/22) 
 // practicing different times of ways to generate a gait, previously used for loops to generate 
 // it but for loops stop everything else from the code from running until it finishes
 // the easiest way would be to just have a variable of the array (gait) we want.
@@ -11,23 +11,56 @@
 Servo sBlue; // thigh  angle: psi
 Servo sYellow; // shank  angle: eta
 
+Servo sBlue1; // thigh  angle: psi
+Servo sYellow1; // shank  angle: eta
+
+Servo sBlue2; // thigh  angle: psi
+Servo sYellow2; // shank  angle: eta
+
+Servo sBlue3; // thigh  angle: psi
+Servo sYellow3; // shank  angle: eta
+
 #define sPinB 9 
 #define sPinY 10
-
+#define sPinB1 3 
+#define sPinY1 5
+#define sPinB2 6
+#define sPinY2 11
+#define sPinB3 12
+#define sPinY3 7
 
 
 // setting servos init: this is when P(x,y) = P(0,0)
-float sB_init = 1450; // KEY: set zero to 0, servo moves CCW 
-float sY_init = 1575; // KEY: if we go with eta then 90 deg becomes the new 0 deg for Yellow, i.e. sY_angle = 90 - eta
+float sB_init = 1535; // KEY: set zero to 0, servo moves CCW 
+float sY_init = 1425; // KEY: if we go with eta then 90 deg becomes the new 0 deg for Yellow, i.e. sY_angle = 90 - eta
+float sB_init1 = 1400; 
+float sY_init1 = 1410;
+float sB_init2 = 1458; 
+float sY_init2 = 1400;
+float sB_init3 = 1548; 
+float sY_init3 = 1565;
 
-//pulse width microseconds to set the range the servos from 0 to 180
-int min_pwB = 950; 
-int max_pwB = 1950; 
-int min_pwY = 1075; 
-int max_pwY = 2075; 
+//pulse width microseconds to set the range the servos from 0 to 90
+int min_pwB = 1035; 
+int max_pwB = 2035; 
+int min_pwY = 925; 
+int max_pwY = 1925; 
+int min_pwB1 = 900; 
+int max_pwB1 = 1900; 
+int min_pwY1 = 910; 
+int max_pwY1 = 1910; 
+int min_pwB2 = 970; 
+int max_pwB2 = 1945; 
+int min_pwY2 = 925; 
+int max_pwY2 = 1875;
+int min_pwB3 = 1025; 
+int max_pwB3 = 2070; 
+int min_pwY3 = 1060; 
+int max_pwY3 = 2070; 
 
-float xn;
-float yn;
+
+float xn,xn2;
+float yn,yn2;
 float psi_deg;
 float eta_deg;
 // Index ----------> 0, 1, 2, 3, 4,  5
@@ -42,12 +75,15 @@ int sw = 1;
 */
 
 int i = 0;
-const int endp = 25; // number of points 
+int k = 0;
+const int endp = 60; // number of points 
 float t;
-unsigned long current; // ms time 
-unsigned long previous;  // ms time 
-const unsigned long period = 12500; // dt = 25ms  <-- the time each servo write is commanded 
+unsigned long current; // us time 
+unsigned long previous1;  // us time (timed event 1)
+unsigned long previous2; //us time (timed event 2)
+const unsigned long period = 9000; // us  <-- the time each servo write is commanded 
 unsigned long h = 0;
+unsigned long j = 0;
 
 // inverse kinematics
 void foxyIK(float Px, float Py);
@@ -68,66 +104,151 @@ void setup() {
   // intializing servos 
   sBlue.writeMicroseconds(sB_init); // - 32.083
   sYellow.writeMicroseconds(sY_init); // + 53.472
-   
-  sBlue.attach(sPinB,min_pwB,max_pwB); // "thigh"
-  sYellow.attach(sPinY,min_pwY,max_pwY); // "shank"
+  sBlue1.writeMicroseconds(sB_init1); 
+  sYellow1.writeMicroseconds(sY_init1);
+  sBlue2.writeMicroseconds(sB_init2); 
+  sYellow2.writeMicroseconds(sY_init2);
+   sBlue3.writeMicroseconds(sB_init3); 
+  sYellow3.writeMicroseconds(sY_init3);
 
-  previous = micros();
+  
+  sBlue.attach(sPinB,min_pwB,max_pwB); // "thigh"
+  sYellow.attach(sPinY,min_pwY,max_pwY); // "shank" 
+  sBlue1.attach(sPinB1,min_pwB1,max_pwB1); // "thigh"
+  sYellow1.attach(sPinY1,min_pwY1,max_pwY1); // "shank"
+  sBlue2.attach(sPinB2,min_pwB2,max_pwB2); // "thigh"
+  sYellow2.attach(sPinY2,min_pwY2,max_pwY2); // "shank"
+    sBlue3.attach(sPinB3,min_pwB3,max_pwB3); // "thigh"
+  sYellow3.attach(sPinY3,min_pwY3,max_pwY3); // "shank"
+  delay(1000);
+  
+  previous1 = micros();
+  previous2 = micros();
 }
 
 void loop() {
 
-  //get the current time in ms
+  //get the current time in us
   current = micros();
 
-  const int gait_cycles = 1;
+  const int gait_cycles = 3;
 
   
-  // timed event //
-  if(current - previous >= period) {
-  if (h <= endp*2*gait_cycles) {
-    if (i <= endp) {
-     
+  // Timed Event 1 //
+  if(current - previous1 >= period) {
+    if (h <= endp*gait_cycles) {
+      if (i <= endp/2 - 5) {
+      
+        //SWING LEG 2
         xn = i*1;
         yn = sqrt(156.25 - pow((xn - 12.5),2));
-        i = i + 1; 
         
-    }
-    else if (i <= endp*2) {
-      if (i == endp*2) {
-        i = 0;
+        i += 1;
       }
-      xn = xn - 1;
-      yn = yn;
-      i = i + 1;
-    }
+      else if (i <= endp/2 & i > endp/2 - 5) {
+        // DOWN LEG 2
+        xn = xn;
+        yn = yn - 1;
+
+        i += 1;
+      }
+      else if (i <= endp - 5 & i > endp/2) {
+        // STANCE LEG 2
+        xn = xn - 1;
+        yn = yn;
+        i += 1;
+      }
+      else {
+        if (i == endp) {
+          i = 0;
+        }
+      //UP LEG 2
+      xn = xn;
+      yn = yn + 1;
+
+      i += 1;
+      }
 
     // Get servo angles from end effector position
     foxyIK(xn,yn);
     // Write to servo in us
     sBlue.writeMicroseconds(round(degtoMicroS_B(psi_deg)));
     sYellow.writeMicroseconds(round(degtoMicroS_Y(90-eta_deg)));
+    sBlue2.writeMicroseconds(round(degtoMicroS_B2(psi_deg)));
+    sYellow2.writeMicroseconds(round(degtoMicroS_Y2(90-eta_deg)));
+    /*
+    foxyIK(xn2,yn2);
+    sBlue1.writeMicroseconds(round(degtoMicroS_B1(psi_deg)));
+    sYellow1.writeMicroseconds(round(degtoMicroS_Y1(90-eta_deg)));
+        sBlue3.writeMicroseconds(round(degtoMicroS_B3(psi_deg)));
+    sYellow3.writeMicroseconds(round(degtoMicroS_Y3(90-eta_deg)));
+    */
+    
     t = ((float) millis())/1000.0; // calc time in seconds
 
     //print to monitor
-    Serial.print(t,4);
-    Serial.print(" ");
-    Serial.print(xn);
-    Serial.print(" ");
-    Serial.print(yn);
-    Serial.print(" ");
-    Serial.println(); 
+    Serial.print(t,4); Serial.print(" "); Serial.print(xn); Serial.print(" "); Serial.print(yn); Serial.print(" "); Serial.println(); 
 
     //make current time the previous time
-    previous = current;
-    h = h + 1;
+    previous1 = current;
+    h += 1;
   }
   else {
-    sBlue.detach(); // "thigh"
-    sYellow.detach(); // "shank"
+    sBlue.detach(); sYellow.detach(); sBlue2.detach(); sYellow2.detach(); 
   }
   }
- 
+
+  // Timed Event 2 //
+  if (current/1000 > (period/1000)*endp*2.2) {  // 
+    previous2 = current; ///
+    if (current - previous2 >= period) {
+      if (j <= endp*gait_cycles) {
+        if (k <= endp/2 - 5) {
+          //SWING LEG 1
+          xn2 = k*1;
+          yn2 = sqrt(156.25 - pow((xn2 - 12.5),2));
+
+          k += 1;
+        }
+        else if (k <= endp/2 & k > endp/2 - 5) {
+          // DOWN LEG 1
+          xn2 = xn2;
+          yn2 = yn2 - 1;
+
+          k += 1;
+        }
+        else if (k <= endp - 5 & k > endp/2) {
+          // STANCE LEG 1
+          xn2 = xn2 - 1;
+          yn2 = yn2;
+          k += 1;
+        }
+        else {
+          if (k == endp) {
+            k = 0;
+          }
+        //UP LEG 1
+        xn2 = xn2;
+        yn2 = yn2 + 1;
+
+        k += 1;
+    }
+    // Write to servos
+    foxyIK(xn2,yn2);
+    sBlue1.writeMicroseconds(round(degtoMicroS_B1(psi_deg)));
+    sYellow1.writeMicroseconds(round(degtoMicroS_Y1(90-eta_deg)));
+    sBlue3.writeMicroseconds(round(degtoMicroS_B3(psi_deg)));
+    sYellow3.writeMicroseconds(round(degtoMicroS_Y3(90-eta_deg)));
+
+    //make current time the previous time
+    previous2 = current;
+    j += 1;
+  }
+  else {
+    sBlue1.detach(); sYellow1.detach(); sBlue3.detach(); sYellow3.detach();
+  }
+  }
+  } 
 }
 
 
@@ -197,7 +318,7 @@ void foxyIK(float Px, float Py) {
   //  convert (phi and psi into degrees) //
   psi_deg = (180.0/PI) * psi;
   eta_deg = (180.0/PI) * eta;
-  //return psi_deg, eta_deg;
+///
 }
 
 float degtoMicroS_B(float degree) {
@@ -208,4 +329,34 @@ float degtoMicroS_B(float degree) {
 float degtoMicroS_Y(float degree) {
     float MicroSY = min_pwY + degree*(1000.0/90.0);
     return MicroSY;
+}
+
+float degtoMicroS_B1(float degree) {
+    float MicroSB1 = min_pwB1 + degree*(1000.0/90.0);
+    return MicroSB1;
+}
+
+float degtoMicroS_Y1(float degree) {
+    float MicroSY1 = min_pwY1 + degree*(1000.0/90.0);
+    return MicroSY1;
+}
+
+float degtoMicroS_B2(float degree) {
+    float MicroSB2 = min_pwB2 + degree*(975.0/90.0);
+    return MicroSB2;
+}
+
+float degtoMicroS_Y2(float degree) {
+    float MicroSY2 = min_pwY2 + degree*(950.0/90.0);
+    return MicroSY2;
+}
+
+float degtoMicroS_B3(float degree) {
+    float MicroSB3 = min_pwB3 + degree*(1045.0/90.0);
+    return MicroSB3;
+}
+
+float degtoMicroS_Y3(float degree) {
+    float MicroSY3 = min_pwY3 + degree*(1010.0/90.0);
+    return MicroSY3;
 }
