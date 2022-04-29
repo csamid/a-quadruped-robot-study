@@ -25,38 +25,38 @@ Servo sYellow3; // shank  angle: eta
 #define sPinB1 3 
 #define sPinY1 5
 #define sPinB2 6
-#define sPinY2 11
-#define sPinB3 12
+#define sPinY2 14
+#define sPinB3 15
 #define sPinY3 7
 
 
 // setting servos init: this is when P(x,y) = P(0,0)
-float sB_init = 1535; // KEY: set zero to 0, servo moves CCW 
-float sY_init = 1425; // KEY: if we go with eta then 90 deg becomes the new 0 deg for Yellow, i.e. sY_angle = 90 - eta
-float sB_init1 = 1400; 
-float sY_init1 = 1410;
+float sB_init  = 1435; // KEY: set zero to 0, servo moves CCW 
+float sY_init  = 1535; // KEY: if we go with eta then 90 deg becomes the new 0 deg for Yellow, i.e. sY_angle = 90 - eta
+float sB_init1 = 1495; 
+float sY_init1 = 1435;
 float sB_init2 = 1458; 
 float sY_init2 = 1400;
-float sB_init3 = 1548; 
-float sY_init3 = 1565;
+float sB_init3 = 1365; 
+float sY_init3 = 1518;
 
 //pulse width microseconds to set the range the servos from 0 to 90
-int min_pwB = 1035; 
-int max_pwB = 2035; 
-int min_pwY = 925; 
-int max_pwY = 1925; 
-int min_pwB1 = 900; 
-int max_pwB1 = 1900; 
-int min_pwY1 = 910; 
-int max_pwY1 = 1910; 
+int min_pwB = 955; 
+int max_pwB = 1915; 
+int min_pwY = 1070; 
+int max_pwY = 2000; 
+int min_pwB1 = 1030; 
+int max_pwB1 = 1960; 
+int min_pwY1 = 980; 
+int max_pwY1 = 1890; 
 int min_pwB2 = 970; 
 int max_pwB2 = 1945; 
 int min_pwY2 = 925; 
 int max_pwY2 = 1875;
-int min_pwB3 = 1025; 
-int max_pwB3 = 2070; 
-int min_pwY3 = 1060; 
-int max_pwY3 = 2070; 
+int min_pwB3 = 935; 
+int max_pwB3 = 1845; 
+int min_pwY3 = 1050; 
+int max_pwY3 = 1985; 
 
 
 float xn,xn2;
@@ -76,12 +76,12 @@ int sw = 1;
 
 int i = 0;
 int k = 0;
-const int endp = 70; // number of points 
+const int endp = 60; // number of points 
 float t;
 unsigned long current; // us time 
 unsigned long previous1;  // us time (timed event 1)
 unsigned long previous2; //us time (timed event 2)
-const unsigned long period = 14000; // us  <-- the time each servo write is commanded 
+const unsigned long period = 10000; // us  <-- the time each servo write is commanded 
 unsigned long h = 0;
 unsigned long j = 0;
 
@@ -137,7 +137,7 @@ void loop() {
   // Timed Event 1 //
   if(current - previous1 >= period) {
     if (h <= endp*gait_cycles) {
-      if (i <= endp/2 - 10) {
+      if (i <= endp/2 - 5) {
       
         //SWING LEG 2
         xn = i*1;
@@ -145,14 +145,14 @@ void loop() {
         
         i += 1;
       }
-      else if (i <= endp/2 & i > endp/2 - 10) {
+      else if (i <= endp/2 & i > endp/2 - 5) {
         // DOWN LEG 2
         xn = xn;
         yn = yn - 1;
 
         i += 1;
       }
-      else if (i <= endp - 10 & i > endp/2) {
+      else if (i <= endp - 5 & i > endp/2) {
         // STANCE LEG 2
         xn = xn - 1;
         yn = yn;
@@ -199,24 +199,25 @@ void loop() {
   }
 
   // Timed Event 2 //
-  if (current/1000 > (period/1000)*endp*1.6) {
+  if (current/1000 > (period/1000)*endp*2.2) {
     if (current - previous2 >= period) {
       if (j <= endp*gait_cycles) {
-        if (k <= endp/2 - 10) {
+        if (k <= endp/2 - 5) {
           //SWING LEG 1
           xn2 = k*1;
           yn2 = sqrt(156.25 - pow((xn2 - 12.5),2));
 
           k += 1;
         }
-        else if (k <= endp/2 & k > endp/2 - 10) {
+        else if (k <= endp/2 & k > endp/2 - 5) {
           // DOWN LEG 1
           xn2 = xn2;
           yn2 = yn2 - 1;
 
           k += 1;
         }
-        else if (k <= endp - 10 & k > endp/2) {
+        else if (k <= endp - 5
+        & k > endp/2) {
           // STANCE LEG 1
           xn2 = xn2 - 1;
           yn2 = yn2;
@@ -321,22 +322,22 @@ void foxyIK(float Px, float Py) {
 }
 
 float degtoMicroS_B(float degree) {
-    float MicroSB = min_pwB + degree*(1000.0/90.0);
+    float MicroSB = min_pwB + degree*(960.0/90.0);
     return MicroSB;
 }
 
 float degtoMicroS_Y(float degree) {
-    float MicroSY = min_pwY + degree*(1000.0/90.0);
+    float MicroSY = min_pwY + degree*(930.0/90.0);
     return MicroSY;
 }
 
 float degtoMicroS_B1(float degree) {
-    float MicroSB1 = min_pwB1 + degree*(1000.0/90.0);
+    float MicroSB1 = min_pwB1 + degree*(930.0/90.0);
     return MicroSB1;
 }
 
 float degtoMicroS_Y1(float degree) {
-    float MicroSY1 = min_pwY1 + degree*(1000.0/90.0);
+    float MicroSY1 = min_pwY1 + degree*(910.0/90.0);
     return MicroSY1;
 }
 
@@ -351,11 +352,11 @@ float degtoMicroS_Y2(float degree) {
 }
 
 float degtoMicroS_B3(float degree) {
-    float MicroSB3 = min_pwB3 + degree*(1045.0/90.0);
+    float MicroSB3 = min_pwB3 + degree*(910.0/90.0);
     return MicroSB3;
 }
 
 float degtoMicroS_Y3(float degree) {
-    float MicroSY3 = min_pwY3 + degree*(1010.0/90.0);
+    float MicroSY3 = min_pwY3 + degree*(935.0/90.0);
     return MicroSY3;
 }
